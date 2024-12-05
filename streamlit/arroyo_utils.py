@@ -26,4 +26,4 @@ def create_arroyo_pipeline(token: str):
 def get_arroyo_pipelines():
     response = requests.get('http://arroyo:5115/api/v1/pipelines')
     assert response.status_code == 200, f'Error getting pipelines with {response.status_code}: {response.text}'
-    return [r['name'] for r in response.json()['data'] where r['actionText'] != 'Failed']
+    return [r['name'] for r in response.json()['data'] if r['actionText'] != 'Failed']
