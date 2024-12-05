@@ -10,6 +10,7 @@ import json
 from mqtt_listener import start_mqtt_listener
 from arroyo_utils import get_arroyo_pipelines, create_arroyo_pipeline, create_arroyo_source
 
+
 # Initialize global variables
 data_queue = deque(maxlen=300)  # Maintain a 30-second window (6 * 5-second intervals)
 added_data = False
@@ -22,6 +23,10 @@ def add_data(new_data):
         data_queue.append(new_data)
         added_data = True
 
+st.set_page_config(layout="wide")
+if 'stop' in st.session_state:
+    st.session_state['stop'].set()
+    print('stop event set')
 
 tab1, tab2 = st.tabs(['Dashboard','Create Pipeline'])
 
@@ -43,12 +48,20 @@ with tab1:
     thread = None
 
     # Streamlit app loop
+    threads = threading.enumerate()
+    for thread in threads:
+        print(thread.name)
+    
+
     input_box = st.selectbox("Choose a pipeline",get_arroyo_pipelines())
-    if thread is not None:
-        thread.stop()
+    # if thread is not None:
+    #     thread.join()
     placeholder = st.empty()
     if input_box:
-        thread = threading.Thread(target=start_mqtt_listener, args=(add_data,input_box.split(' ')[0]), daemon=True)
+        
+        stop_event = threading.Event()
+        st.session_state['stop']  = stop_event
+        thread = threading.Thread(target=start_mqtt_listener, args=(add_data,input_box.split(' ')[0],stop_event), daemon=True)
         thread.start()
         df = pd.DataFrame(columns=["start_time", "avg_buy_vol", "avg_sell_vol", "avg_ob_pressure"])
         pause_button = st.button("Pause")
@@ -58,24 +71,28 @@ with tab1:
                     df = pd.DataFrame(data_queue, columns=["start_time", "avg_buy_vol", "avg_sell_vol", "avg_ob_pressure"])
                     added_data = False
             with placeholder.container():
-                st.markdown("### First Chart")
-                fig = plost.line_chart(
-                    df, y="avg_ob_pressure", x="start_time"
-                )
-                st.write(fig)
-                    
-                st.markdown("### Second Chart")
-                fig2 = plost.hist(data=df, x="avg_buy_vol")
-                st.write(fig2)
+                col1,col2 = st.columns([0.65,0.35])
+                with col1:
+                    st.markdown("Order Book Pressure ")
+                    fig = plost.line_chart(
+                        df, y="avg_ob_pressure", x="start_time"
+                    )
+                    st.write(fig)
+                    st.markdown("buy vs sell flow") 
+                    fig3 = plost.line_chart(
+                        df, y=("avg_buy_vol","avg_sell_vol"), x="start_time"
+                    )
 
-                fig3 = plost.line_chart(
-                    df, y=("avg_buy_vol","avg_sell_vol"), x="start_time"
-                )
-                
-                fig3 = plost.xy_hist(
-                    df, x="avg_buy_vol",y='avg_sell_vol'
-                )
+                with col2:    
+                    st.markdown("buy flow histogram")
+                    fig2 = plost.hist(data=df, x="avg_buy_vol")
+                    st.write(fig2)        
+                    st.markdown("buy vs sell 2d histogram")
+                    fig4 = plost.xy_hist(
+                        df, x="avg_buy_vol",y='avg_sell_vol'
+                    )
             time.sleep(1)  # Refresh every second
+        stop_event.set()
 
     
     

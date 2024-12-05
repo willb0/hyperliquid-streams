@@ -8,9 +8,13 @@ def on_message(client, userdata, message):
     except Exception as e:
         print(f"Error processing message: {e}")
 
-def start_mqtt_listener(callback, token):
+def start_mqtt_listener(callback, token,stop_event):
     client = mqtt.Client(userdata=callback)
     client.on_message = on_message
     client.connect("mosquitto", 1883)  # Adjust MQTT broker/port if necessary
     client.subscribe(f"events-{token}")
-    client.loop_forever()
+    client.loop_start()
+    while not stop_event.is_set():
+        continue
+    client.loop_stop()
+    return
