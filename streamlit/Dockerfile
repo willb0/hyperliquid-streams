@@ -9,7 +9,7 @@ COPY requirements.txt requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 # Install dependencies
-
+ENV PYTHONUNBUFFERED=1
 
 # Expose Streamlit port
 EXPOSE 8501
