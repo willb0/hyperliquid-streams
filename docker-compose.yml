@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  arroyo:
+    container_name: arroyo
+    image: ghcr.io/arroyosystems/arroyo-full:latest
+    ports:
+      - "5115:5115"
+    volumes:
+      - arroyo:/~
+    networks:
+      - main
+  mosquitto:
+    image: eclipse-mosquitto
+    hostname: mosquitto
+    container_name: mosquitto
+    restart: unless-stopped
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - mosquitto:/mosquitto/data
+      - mosquitto:/mosquitto/log
+      - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf
+    networks:
+      - main
+  streamlit:
+    build:
+      context: ./streamlit
+    ports:
+      - "8501:8501"
+    networks:
+      - main
+volumes:
+  minio_data:
+  arroyo: 
+  redis:
+  mosquitto:
+
+networks:
+  main:

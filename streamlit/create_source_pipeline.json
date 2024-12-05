@@ -1,0 +1,26 @@
+{
+    "name": "BOINK",
+    "connector": "websocket",
+    "connectionProfileId": null,
+    "config": {
+        "endpoint": "wss://api.hyperliquid.xyz/ws",
+        "subscription_messages": [
+            "{\"method\": \"subscribe\", \"subscription\": { \"type\": \"l2Book\", \"coin\": \"SOL\"}}"
+        ]
+    },
+    "schema": {
+        "fields": [],
+        "badData": {
+            "drop": {}
+        },
+        "format": {
+            "json": {
+                "unstructured": true,
+                "confluentSchemaRegistry": false
+            }
+        },
+        "definition": {
+            "raw_schema": "value"
+        }
+    }
+}
